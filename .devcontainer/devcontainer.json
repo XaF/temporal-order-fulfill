@@ -1,0 +1,25 @@
+{
+  "build": { "dockerfile": "Dockerfile" },
+  "overrideCommand": false,
+  "postStartCommand": "WATCHDIR=$PWD; cd /tmp && nohup bash -c \"/watcher.sh \\\"${WATCHDIR}\\\" &>/tmp/logs/watcher.log &\"; rm nohup.out",
+  "forwardPorts": [
+    7233,
+    7243,
+    8080,
+    9090
+  ],
+  "portsAttributes": {
+    "7233": {
+      "label": "temporal-grpc"
+    },
+    "7243": {
+      "label": "temporal-http"
+    },
+    "8080": {
+      "label": "temporal-web-ui"
+    },
+    "9090": {
+      "label": "temporal-metrics"
+    }
+  }
+}

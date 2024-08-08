@@ -22,29 +22,38 @@ async function run({
   serverRootCACertificatePath,
   taskQueue,
 }: Env, numOrders?: number, invalidPercentage?: number) {
-  // Note that the serverRootCACertificate is NOT needed if connecting to Temporal Cloud because
-  // the server certificate is issued by a publicly trusted CA.
-  let serverRootCACertificate: Buffer | undefined = undefined;
-  if (serverRootCACertificatePath) {
-    serverRootCACertificate = await fs.readFile(serverRootCACertificatePath);
-  }
+  let tls: TLSConfig | undefined = undefined;
+  if (serverNameOverride || serverRootCACertificatePath || clientCertPath || clientKeyPath) {
+    // Note that the serverRootCACertificate is NOT needed if connecting to Temporal Cloud because
+    // the server certificate is issued by a publicly trusted CA.
+    let serverRootCACertificate: Buffer | undefined = undefined;
+    if (serverRootCACertificatePath) {
+      serverRootCACertificate = await fs.readFile(serverRootCACertificatePath);
+    }
 
-  const connection = await Connection.connect({
-    address,
-    tls: {
+    if (!clientCertPath || !clientKeyPath) {
+      throw new Error('clientCertPath and clientKeyPath must be provided to use mTLS');
+    }
+
+    tls = {
       serverNameOverride,
       serverRootCACertificate,
       clientCertPair: {
         crt: await fs.readFile(clientCertPath),
         key: await fs.readFile(clientKeyPath),
       },
-    },
+    };
+  }
+
+  const connection = await Connection.connect({
+    address,
+    tls,
   });
   const client = new Client({ connection, namespace });
 
   // Generate orders
-  const orders = numOrders && invalidPercentage !== undefined 
-    ? generateOrders(numOrders, invalidPercentage) 
+  const orders = numOrders && invalidPercentage !== undefined
+    ? generateOrders(numOrders, invalidPercentage)
     : getDefaultOrders();
 
   await runWorkflows(client, taskQueue, orders);
@@ -128,8 +137,8 @@ function requiredEnv(name: string): string {
 export interface Env {
   address: string;
   namespace: string;
-  clientCertPath: string;
-  clientKeyPath: string;
+  clientCertPath?: string;
+  clientKeyPath?: string;
   serverNameOverride?: string; // not needed if connecting to Temporal Cloud
   serverRootCACertificatePath?: string; // not needed if connecting to Temporal Cloud
   taskQueue: string;
@@ -137,10 +146,10 @@ export interface Env {
 
 export function getEnv(): Env {
   return {
-    address: requiredEnv('TEMPORAL_ADDRESS'),
-    namespace: requiredEnv('TEMPORAL_NAMESPACE'),
-    clientCertPath: requiredEnv('TEMPORAL_CLIENT_CERT_PATH'),
-    clientKeyPath: requiredEnv('TEMPORAL_CLIENT_KEY_PATH'),
+    address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
+    namespace: process.env.TEMPORAL_NAMESPACE || 'default',
+    clientCertPath: process.env.TEMPORAL_CLIENT_CERT_PATH,
+    clientKeyPath: process.env.TEMPORAL_CLIENT_KEY_PATH,
     serverNameOverride: process.env.TEMPORAL_SERVER_NAME_OVERRIDE,
     serverRootCACertificatePath: process.env.TEMPORAL_SERVER_ROOT_CA_CERT_PATH,
     taskQueue: process.env.TEMPORAL_TASK_QUEUE || 'sample-order-fulfill',
