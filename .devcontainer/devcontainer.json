@@ -2,7 +2,7 @@
   "build": { "dockerfile": "Dockerfile" },
   "overrideCommand": false,
   "postCreateCommand": "npm install",
-  //"postStartCommand": "bash /monstart.sh",
+  "postStartCommand": "bash /monstart.sh",
   "forwardPorts": [
     7233,
     7243,

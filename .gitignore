@@ -1,2 +1,6 @@
 lib
 node_modules
+
+# Files used for demos
+inventory-service-available
+item-names-bug-fix
