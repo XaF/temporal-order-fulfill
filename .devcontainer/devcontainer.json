@@ -21,5 +21,12 @@
     "9090": {
       "label": "temporal-metrics"
     }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "zucska.task-button"
+      ]
+    }
   }
 }
