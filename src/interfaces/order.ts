@@ -11,9 +11,9 @@ export interface Order {
 
 interface Payment {
     creditCard: CreditCard;
-  }
-  
-  interface CreditCard {
-    number: string;
-    expiration: string;
-  }
+}
+
+interface CreditCard {
+  number: string;
+  expiration: string;
+}

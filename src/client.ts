@@ -1,10 +1,11 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { Connection, Client } from '@temporalio/client';
-import { runWorkflows, getDefaultOrders } from './starter';
+import { runWorkflows } from './starter';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import type { Order, OrderItem } from './interfaces/order';
+import { TLSConfig } from '@temporalio/client';
 
 /**
  * Schedule a Workflow connecting with mTLS, configuration is provided via environment variables.
@@ -13,15 +14,21 @@ import type { Order, OrderItem } from './interfaces/order';
  * If using Temporal Cloud, omit the serverRootCACertificate so that Node.js defaults to using
  * Mozilla's publicly trusted list of CAs when verifying the server certificate.
  */
-async function run({
-  address,
-  namespace,
-  clientCertPath,
-  clientKeyPath,
-  serverNameOverride,
-  serverRootCACertificatePath,
-  taskQueue,
-}: Env, numOrders?: number, invalidPercentage?: number) {
+async function run(
+  {
+    address,
+    namespace,
+    clientCertPath,
+    clientKeyPath,
+    serverNameOverride,
+    serverRootCACertificatePath,
+    taskQueue,
+  }: Env,
+  numOrders?: number,
+  invalidPercentage?: number,
+  expensivePercentage?: number,
+  expiredCardPercentage?: number,
+) {
   let tls: TLSConfig | undefined = undefined;
   if (serverNameOverride || serverRootCACertificatePath || clientCertPath || clientKeyPath) {
     // Note that the serverRootCACertificate is NOT needed if connecting to Temporal Cloud because
@@ -52,9 +59,12 @@ async function run({
   const client = new Client({ connection, namespace });
 
   // Generate orders
-  const orders = numOrders && invalidPercentage !== undefined
-    ? generateOrders(numOrders, invalidPercentage)
-    : getDefaultOrders();
+  const orders = generateOrders(
+    numOrders || 1,
+    invalidPercentage || 0,
+    expensivePercentage || 0,
+    expiredCardPercentage || 0,
+  );
 
   await runWorkflows(client, taskQueue, orders);
   console.log('All workflows started');
@@ -64,11 +74,19 @@ function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generateOrders(count: number, invalidPercentage: number): Order[] {
+function generateOrders(
+  count: number,
+  invalidPercentage: number,
+  expensivePercentage: number,
+  expiredCardPercentage: number,
+): Order[] {
   const stockDatabasePath = path.resolve(__dirname, '../data/stock_database.json');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const stockData = require(stockDatabasePath);
   const orders: Order[] = [];
   const numInvalidOrders = Math.floor((invalidPercentage / 100) * count);
+  const numExpensiveOrders = Math.floor((expensivePercentage / 100) * count);
+  const numExpiredCardOrders = Math.floor((expiredCardPercentage / 100) * count);
 
   for (let i = 0; i < count; i++) {
     const numItems = getRandomInt(1, 3);
@@ -85,7 +103,7 @@ function generateOrders(count: number, invalidPercentage: number): Order[] {
     }
 
     const order: Order = {
-      items: items,
+      items,
       payment: {
         creditCard: {
           number: "1234 5678 1234 5678",
@@ -94,45 +112,76 @@ function generateOrders(count: number, invalidPercentage: number): Order[] {
       }
     };
 
-    if (i < numInvalidOrders) {
-      makeOrderInvalid(order);
-    }
-
     orders.push(order);
   }
+
+  makeOrdersInvalid(pickRandomItems(orders, invalidPercentage));
+  makeOrdersExpensive(pickRandomItems(orders, expensivePercentage));
+  makeOrdersExpiredCard(pickRandomItems(orders, expiredCardPercentage));
 
   return orders;
 }
 
-function makeOrderInvalid(order: Order): void {
-  // Append @@@ to one of the item names to make them invalid
-  if (order.items.length > 0) {
-    order.items[0].itemName += "@@@";
-  }
+const pickRandomItems = <T> (arr: T[], percentage: number): T[] => {
+  const shuffled = Array.from(arr).sort(() => 0.5 - Math.random());
+  const n = Math.floor((percentage / 100) * arr.length);
+  return shuffled.slice(0, n);
+}
+
+function makeOrdersInvalid(orders: Order[]): void {
+  orders.forEach(function (order: Order) {
+    // Append @@@ to one of the item names to make the order invalid
+    if (order.items.length > 0) {
+      order.items[0].itemName += "@@@";
+    }
+  });
+}
+
+function makeOrdersExpensive(orders: Order[]): void {
+  orders.forEach(function (order: Order) {
+    let orderTotal = order.items.reduce((sum, item) => sum + item.itemPrice * item.quantity, 0);
+    while (orderTotal <= 10000) {
+      // Add a random number between 1 and 3 of each items
+      order.items.forEach(function (item: OrderItem) {
+        item.quantity += getRandomInt(1, 3);
+      });
+      // Compute the new price
+      orderTotal = order.items.reduce((sum, item) => sum + item.itemPrice * item.quantity, 0);
+    }
+  });
+}
+
+function makeOrdersExpiredCard(orders: Order[]): void {
+  orders.forEach(function (order: Order) {
+    order.payment.creditCard.expiration = '12/23';
+  });
 }
 
 const argv = yargs(hideBin(process.argv)).options({
   numOrders: { type: 'number', alias: 'n' },
-  invalidPercentage: { type: 'number', alias: 'i' }
-}).argv as { numOrders?: number, invalidPercentage?: number };
+  invalidPercentage: { type: 'number', alias: 'i' },
+  expensivePercentage: { type: 'number', alias: 'e' },
+  expiredCardPercentage: { type: 'number', alias: 'E' },
+}).argv as {
+  numOrders?: number,
+  invalidPercentage?: number,
+  expensivePercentage?: number,
+  expiredCardPercentage?: number,
+};
 
-run(getEnv(), argv.numOrders, argv.invalidPercentage).then(
+run(
+  getEnv(),
+  argv.numOrders,
+  argv.invalidPercentage,
+  argv.expensivePercentage,
+  argv.expiredCardPercentage,
+).then(
   () => process.exit(0),
   (err) => {
     console.error(err);
     process.exit(1);
   }
 );
-
-// Helpers for configuring the mTLS client and worker samples
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new ReferenceError(`${name} environment variable is not defined`);
-  }
-  return value;
-}
 
 export interface Env {
   address: string;

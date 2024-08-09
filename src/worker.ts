@@ -61,16 +61,6 @@ run(getEnv()).catch((err) => {
   process.exit(1);
 });
 
-// Helpers for configuring the mTLS client and worker samples
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new ReferenceError(`${name} environment variable is not defined`);
-  }
-  return value;
-}
-
 export interface Env {
   address: string;
   namespace: string;

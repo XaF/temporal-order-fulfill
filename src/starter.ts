@@ -16,6 +16,35 @@ const sampleOrders: Order[] = [
     }
   }
 ];
+const expiredCardOrders: Order[] = [
+  {
+    items: [
+      { itemName: "Cloudmonster Running Shoe (Men)", itemPrice: 126.99, quantity: 1 },
+      { itemName: "2002R Sneaker (Men)", itemPrice: 63.00, quantity: 2 }
+    ],
+    payment: {
+      creditCard: {
+        number: "5678 1234 5678 1234",
+        expiration: "12/23"
+      }
+    }
+  }
+];
+
+const expensiveOrders: Order[] = [
+  {
+    items: [
+      { itemName: "Cloudmonster Running Shoe (Men)", itemPrice: 126.99, quantity: 30 },
+      { itemName: "2002R Sneaker (Men)", itemPrice: 63.00, quantity: 24 }
+    ],
+    payment: {
+      creditCard: {
+        number: "5678 1234 5678 1234",
+        expiration: "12/24"
+      }
+    }
+  }
+]
 
 export async function runWorkflows(client: Client, taskQueue: string, orders: Order[]): Promise<void> {
   const workflowPromises = orders.map((order, index) =>
@@ -42,4 +71,12 @@ export async function runWorkflows(client: Client, taskQueue: string, orders: Or
 
 export function getDefaultOrders(): Order[] {
   return sampleOrders;
+}
+
+export function getExpiredCardOrders(): Order[] {
+  return expiredCardOrders;
+}
+
+export function getExpensiveOrders(): Order[] {
+  return expensiveOrders;
 }
