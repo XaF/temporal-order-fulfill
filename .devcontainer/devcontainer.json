@@ -12,16 +12,20 @@
   ],
   "portsAttributes": {
     "7233": {
-      "label": "temporal-grpc"
+      "label": "temporal-grpc",
+      "onAutoForward": "silent"
     },
     "7243": {
-      "label": "temporal-http"
+      "label": "temporal-http",
+      "onAutoForward": "silent"
     },
     "8080": {
-      "label": "temporal-web-ui"
+      "label": "temporal-web-ui",
+      "onAutoForward": "openBrowser"
     },
     "9090": {
-      "label": "temporal-metrics"
+      "label": "temporal-metrics",
+      "onAutoForward": "silent"
     }
   },
   "customizations": {
