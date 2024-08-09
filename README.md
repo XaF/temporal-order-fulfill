@@ -29,6 +29,8 @@ You can thus:
    - `npm run scenario.2` sets your worker to use the `demo/workflows2.ts` file, which includes a human in the loop scenario (requires a `approveOrder` signal to be sent for the workflows to proceed if the order total price is above 10000$)
    - `npm run scenario.3` sets your worker to use the `demo/workflows3.ts` file, which includes a scenario where orders need to be approved or they will expire (i.e. same as `scenario.2`, but with a timeout)
 
+#### Start workflows from the SDK
+
 To start workflows, you can use the helper `npm run workflow -- [options]` with its available options:
 - `--numOrders` to specify the number of orders to create (default is 1)
 - `--invalidPercentage` to specify the percentage of invalid orders to create (default is 0)
@@ -41,15 +43,53 @@ e.g.
 - `npm run workflow -- --numOrders 10 --invalidPercentage 20` will create 10 orders, 20% of which will be invalid, and the rest will be valid.
 - `npm run workflow -- --numOrders 10 --invalidPercentage 20 --expensivePercentage 10 --expiredCardPercentage 5` will create 10 orders, 20% of which will be invalid, 10% of which will be expensive, and 5% of which will have expired credit cards. The percentages are calculated on the total number of orders and thus can overlap.
 
+#### Affecting the workflow runs
+
 You can also use:
 - `npm run enable-item-names-bug-fix` / `npm run disable-item-names-bug-fix` to enable or disable the bug fix for the item names in the `api.ts` file.
 - `npm run enable-inventory-service` / `npm run disable-inventory-service` to enable or disable the inventory service.
 
-You can also use the `temporal` CLI directly to send commands to the temporal server. You will need to use the `default` namespace and the `sample-order-fulfill` task queue.
-For instance: `temporal workflow list -n default -q sample-order-fulfill` will list all the workflows in the `sample-order-fulfill` task queue of the `default` namespace.
+#### Using the CLI
+
+You can also use the `temporal` CLI directly to send commands to the temporal server. You will need to use the `default` namespace and the `sample-order-fulfill` task queue. Here are a few commands you can play with:
+- List all the workflows: `temporal workflow list`
+- Execute a new workflow:
+  ```bash
+  temporal workflow execute -n default -t sample-order-fulfill -w my-workflow-id --type OrderFulfillWorkflow --input '{
+    "items": [
+       {
+          "itemName": "Fragrance Set",
+          "itemPrice": 125,
+          "quantity": 42
+       },
+       {
+          "itemName": "Eau de Toilette Gift Set",
+          "itemPrice": 149,
+          "quantity": 38
+       }
+    ],
+    "payment": {
+       "creditCard": {
+          "number": "1234 5678 1234 5678",
+          "expiration": "12/25"
+       }
+    }
+  }
+  ```
+- Signal a running workflow: `temporal workflow signal -w my-workflow-id --name approveOrder`
 
 ### Accessing the UI
 
 GitHub Codespaces allow to expose ports, which means you can access the Temporal Web UI directly from your codespace!
+
 If you click on the `ports` button on the bottom section of the codespace, you will see a list of 4 ports, with one named `Temporal Web UI`.
-By clicking on the little globe icon next to it, you will be able to open the Temporal Web UI in a new tab. _Note: for some reason, the UI cannot be open in a codespace tab, so you will need to open it in a new browser tab._
+By clicking on the little globe icon next to it, you will be able to open the Temporal Web UI in a new tab.
+![Screenshot of the ports listing](static/open-web-browser.png)
+
+_Note: for some reason, the UI cannot be open in a codespace tab, so you will need to open it in a new browser tab._
+
+### Logs
+
+If you are curious, you can see the logs in `/tmp/logs` in your codespace.
+
+The following command allows you to look at the logs of the temporal worker in real time: `tail -f /tmp/logs/temporal-worker.log`
