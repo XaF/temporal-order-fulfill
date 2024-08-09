@@ -5,7 +5,8 @@ ARG VARIANT="20-bookworm"
 FROM mcr.microsoft.com/devcontainers/typescript-node:1-${VARIANT}
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends curl git inotify-tools
+    && apt-get -y install --no-install-recommends curl git
+#inotify-tools
 
 # Install Temporal CLI
 ARG TEMPORAL_CLI_VERSION=1.0.0
@@ -29,8 +30,8 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Prepare the watcher
-COPY watcher.sh /watcher.sh
-RUN chmod +x /watcher.sh
+#COPY watcher.sh /watcher.sh
+#RUN chmod +x /watcher.sh
 
 # Set the default user to be the '1000' user, which is
 # 'node' in the base image
