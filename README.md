@@ -3,7 +3,7 @@
 This repository is built to be played with in a GitHub Codespace.
 
 To get started, you can launch a codespace by using the button at the top of the repository,
-or by clicking [here](https://codespaces.new/XaF/temporal-order-fulfill).
+or by clicking [here](https://codespaces.new/XaF/temporal-order-fulfill/tree/devcontainer?quickstart=1).
 
 ## Playing in the codespace
 
