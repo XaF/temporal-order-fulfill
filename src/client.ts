@@ -84,9 +84,6 @@ function generateOrders(
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const stockData = require(stockDatabasePath);
   const orders: Order[] = [];
-  const numInvalidOrders = Math.floor((invalidPercentage / 100) * count);
-  const numExpensiveOrders = Math.floor((expensivePercentage / 100) * count);
-  const numExpiredCardOrders = Math.floor((expiredCardPercentage / 100) * count);
 
   for (let i = 0; i < count; i++) {
     const numItems = getRandomInt(1, 3);
