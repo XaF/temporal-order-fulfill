@@ -8,7 +8,11 @@
     "lint": "eslint .",
     "start": "ts-node src/worker.ts",
     "start.watch": "nodemon src/worker.ts",
-    "workflow": "ts-node src/client.ts"
+    "workflow": "ts-node src/client.ts",
+    "scenario.0": "if [ -f \"src/workflows.ts.save\" ]; then mv src/workflows.ts.save src/workflows.ts; fi",
+    "scenario.1": "if ! [ -f \"src/workflows.ts.save\" ]; then mv src/workflows.ts src/workflows.ts.save; fi; cp demo/workflows1.ts src/workflows.ts",
+    "scenario.2": "if ! [ -f \"src/workflows.ts.save\" ]; then mv src/workflows.ts src/workflows.ts.save; fi; cp demo/workflows2.ts src/workflows.ts",
+    "scenario.3": "if ! [ -f \"src/workflows.ts.save\" ]; then mv src/workflows.ts src/workflows.ts.save; fi; cp demo/workflows3.ts src/workflows.ts"
   },
   "nodemonConfig": {
     "execMap": {
