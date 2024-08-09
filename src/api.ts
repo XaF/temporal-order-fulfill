@@ -10,6 +10,28 @@ interface StockItem {
   stock: number;
 }
 
+async function itemNamesBugFix(): Promise<boolean> {
+  const itemNamesBugFixStatusFile = 'item-names-bug-fix';
+
+  try {
+    // If the file exists, only consider the bug fix if the contents is
+    // one of 1, true or yes
+    const itemNamesBugFixStatus = await fs.readFile(itemNamesBugFixStatusFile);
+    switch (itemNamesBugFixStatus.toString().trim().toLowerCase()) {
+      case '1':
+      case 'true':
+      case 'yes':
+        return true;
+      default:
+        break;
+    }
+  } catch (error) {
+    // Ignore errors in opening the file
+  }
+
+  return false;
+}
+
 async function reserveInventory(orderItems: OrderItem[]): Promise<void> {
   const stockData = await fs.readFile(stockDatabasePath, 'utf-8');
   const stockDatabase: StockItem[] = JSON.parse(stockData);
@@ -17,12 +39,14 @@ async function reserveInventory(orderItems: OrderItem[]): Promise<void> {
   for (const orderItem of orderItems) {
     let itemName = orderItem.itemName;
 
-    // // //  SIMULATE BUG FIX FOR INVALID DATA BUG
-    // // // Removes @@@ from the end of the item name if present
-    // if (itemName.endsWith('@@@')) {
-    //   itemName = itemName.slice(0, -3);
-    //   console.log(`BUG FIX: Removed @@@ from item name: ${itemName}`);
-    // }
+    // SIMULATE BUG FIX FOR INVALID DATA BUG
+    if (await itemNamesBugFix()) {
+      // Removes @@@ from the end of the item name if present
+      if (itemName.endsWith('@@@')) {
+        itemName = itemName.slice(0, -3);
+        console.log(`BUG FIX: Removed @@@ from item name: ${itemName}`);
+      }
+    }
 
     const stockItem = stockDatabase.find(item => item.itemName === itemName);
 

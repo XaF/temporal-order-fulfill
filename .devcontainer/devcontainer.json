@@ -1,9 +1,8 @@
 {
   "build": { "dockerfile": "Dockerfile" },
   "overrideCommand": false,
-  //"postStartCommand": "WATCHDIR=$PWD; cd /tmp && nohup bash -c \"/watcher.sh \\\"${WATCHDIR}\\\" &>/tmp/logs/watcher.log &\"; rm nohup.out",
   "postCreateCommand": "npm install",
-  "postStartCommand": "nohup bash -c \"npm run start.watch &>/tmp/logs/temporal-worker.log &\" && rm nohup.out",
+  "postStartCommand": "bash /monstart.sh",
   "forwardPorts": [
     7233,
     7243,
@@ -26,13 +25,6 @@
     "9090": {
       "label": "temporal-metrics",
       "onAutoForward": "silent"
-    }
-  },
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        //"zucska.task-button"
-      ]
     }
   }
 }

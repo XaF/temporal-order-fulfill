@@ -29,9 +29,9 @@ RUN mkdir -p /temporal && \
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Prepare the watcher
-#COPY watcher.sh /watcher.sh
-#RUN chmod +x /watcher.sh
+# Prepare the monitor starter
+COPY monstart.sh /monstart.sh
+RUN chmod +x /monstart.sh
 
 # Set the default user to be the '1000' user, which is
 # 'node' in the base image
