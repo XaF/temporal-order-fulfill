@@ -64,5 +64,5 @@ tasks:
   command: npm run start.watch | tee "/tmp/logs/temporal-worker.log"
   openMode: tab-after
 - name: Terminal
-  init: ./.devcontainer/welcome.sh
+  init: ./.devcontainer/welcome.sh | less -R
   openMode: split-right
