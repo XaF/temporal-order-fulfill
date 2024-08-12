@@ -38,20 +38,27 @@ tasks:
       
     mkdir -p /tmp/logs
   command: |
+    # Trigger start of temporal server, and send it to the background
     temporal server start-dev \
       --metrics-port 9090 \
       --ip 0.0.0.0 \
       --port 7233 \
       --http-port 7243 \
       --ui-port 8080 \
-      | tee "/tmp/logs/temporal-server.log"
-- name: Install node packages
+      | tee "/tmp/logs/temporal-server.log" \
+      &
+    # Wait for the web UI port to be open and open the preview
+    gp ports await 8080 && \
+      gp preview $(gp url 8080)/
+    # Now wait on the temporal server process
+    wait
+- name: Worker
   init: |
     npm install
     mkdir -p /tmp/logs
   command: npm run start.watch | tee "/tmp/logs/temporal-worker.log"
+  openMode: tab-after
+- name: Terminal
+  init: |
+    echo Use 'npm run demo.0' to run a demo
   openMode: split-right
-- name: Open the web UI
-  command: |
-    # wait for the Web UI port to be open, and then navigate to it
-    gp ports await 8080 && gp preview $(gp url 8080)/
