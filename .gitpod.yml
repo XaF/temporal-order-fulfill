@@ -20,9 +20,7 @@ ports:
   port: 9090
   onOpen: ignore  # do not notify once the port is detected
 tasks:
-- name: Create logs directory
-  init: mkdir -p /tmp/logs
-- name: Start Temporal Server
+- name: Server
   init: |
     TEMPORAL_CLI_VERSION=1.0.0
     PLATFORM=linux
@@ -37,6 +35,8 @@ tasks:
     curl -L "https://github.com/temporalio/cli/releases/download/v${TEMPORAL_CLI_VERSION}/temporal_cli_${TEMPORAL_CLI_VERSION}_${PLATFORM}_${ARCHITECTURE}.tar.gz" | \
       sudo tar -xz -C /usr/local/bin && \
       sudo chmod +x /usr/local/bin/temporal
+      
+    mkdir -p /tmp/logs
   command: |
     temporal server start-dev \
       --metrics-port 9090 \
@@ -46,7 +46,9 @@ tasks:
       --ui-port 8080 \
       | tee "/tmp/logs/temporal-server.log"
 - name: Install node packages
-  init: npm install
+  init: |
+    npm install
+    mkdir -p /tmp/logs
   command: npm run start.watch | tee "/tmp/logs/temporal-worker.log"
   openMode: split-right
 - name: Open the web UI
