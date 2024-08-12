@@ -1,0 +1,30 @@
+# See https://www.gitpod.io/docs/configure/workspaces/workspace-image
+image:
+  file: .devcontainer/Dockerfile
+# See https://www.gitpod.io/docs/configure/workspaces/ports
+ports:
+- name: temporal-web-ui
+  description: The Web UI of Temporal
+  port: 8080
+  onOpen: ignore  # do not notify once the port is detected
+- name: temporal-grpc
+  description: The gRPC API of Temporal
+  port: 7233
+  onOpen: ignore  # do not notify once the port is detected
+- name: temporal-http
+  description: The HTTP API of Temporal
+  port: 7243
+  onOpen: ignore  # do not notify once the port is detected
+- name: temporal-metrics
+  description: The Prometheus endpoint to read Temporal metrics
+  port: 9090
+  onOpen: ignore  # do not notify once the port is detected
+tasks:
+- name: Install node packages
+  init: npm install
+  command: npm run start.watch | tee -a /tmp/logs/temporal-worker.log
+  openMode: split-right
+- name: Open the web UI
+  command: |
+    # wait for the port, and then browse a specific path
+    gp ports await 8080 && gp preview --external $(gp url 8080)/
