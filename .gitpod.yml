@@ -49,6 +49,9 @@ tasks:
       --ui-port 8080 \
       | tee "/tmp/logs/temporal-server.log" \
       &
+    # Wait for VS Code to be ready and open the README.md file in preview mode
+    gp ports await 23000 && \
+      code --goto README.md
     # Wait for the web UI port to be open and open the preview
     gp ports await 8080 && \
       gp preview $(gp url 8080)/
@@ -64,11 +67,5 @@ tasks:
   command: npm run start.watch | tee "/tmp/logs/temporal-worker.log"
   openMode: tab-after
 - name: Terminal
-  init: |
-    # Wait for VS Code to be ready and open the README.md file in preview mode
-    gp await-port 23000 && \
-      code --goto README.md && \
-      code -r README.md --command "markdown.showPreviewToSide"
-    # Print some instructions in the terminal so the user can start playing in the sandbox
-    echo Use 'npm run demo.0' to run a demo
+  init: ./.devcontainer/welcome.sh
   openMode: split-right
