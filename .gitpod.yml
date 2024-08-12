@@ -1,6 +1,6 @@
 # See https://www.gitpod.io/docs/configure/workspaces/workspace-image
-image:
-  file: .devcontainer/Dockerfile
+#image:
+#  file: .devcontainer/Dockerfile.gitpod
 # See https://www.gitpod.io/docs/configure/workspaces/ports
 ports:
 - name: temporal-web-ui
@@ -20,11 +20,36 @@ ports:
   port: 9090
   onOpen: ignore  # do not notify once the port is detected
 tasks:
+- name: Create logs directory
+  init: mkdir -p /tmp/logs
+- name: Start Temporal Server
+  init: |
+    TEMPORAL_CLI_VERSION=1.0.0
+    PLATFORM=linux
+    ARCHITECTURE=$(uname -m)
+
+    case $ARCHITECTURE in \
+        x86_64 | amd64) ARCHITECTURE=amd64 ;; \
+        aarch64 | arm64) ARCHITECTURE=arm64 ;; \
+        *) echo "Unsupported architecture: $ARCHITECTURE" && exit 1 ;; \
+    esac
+
+    curl -L "https://github.com/temporalio/cli/releases/download/v${TEMPORAL_CLI_VERSION}/temporal_cli_${TEMPORAL_CLI_VERSION}_${PLATFORM}_${ARCHITECTURE}.tar.gz" | \
+      sudo tar -xz -C /usr/local/bin && \
+      sudo chmod +x /usr/local/bin/temporal
+  command: |
+    temporal server start-dev \
+      --metrics-port 9090 \
+      --ip 0.0.0.0 \
+      --port 7233 \
+      --http-port 7243 \
+      --ui-port 8080 \
+      | tee "/tmp/logs/temporal-server.log"
 - name: Install node packages
   init: npm install
-  command: npm run start.watch | tee -a /tmp/logs/temporal-worker.log
+  command: npm run start.watch | tee "/tmp/logs/temporal-worker.log"
   openMode: split-right
 - name: Open the web UI
   command: |
-    # wait for the port, and then browse a specific path
-    gp ports await 8080 && gp preview --external $(gp url 8080)/
+    # wait for the Web UI port to be open, and then navigate to it
+    gp ports await 8080 && gp preview $(gp url 8080)/
