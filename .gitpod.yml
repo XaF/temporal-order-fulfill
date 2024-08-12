@@ -49,9 +49,6 @@ tasks:
       --ui-port 8080 \
       | tee "/tmp/logs/temporal-server.log" \
       &
-    # Wait for VS Code to be ready and open the README.md file in preview mode
-    gp ports await 23000 && \
-      code --goto README.md
     # Wait for the web UI port to be open and open the preview
     gp ports await 8080 && \
       gp preview $(gp url 8080)/
