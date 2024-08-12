@@ -16,4 +16,4 @@ echo -e '- \033[1;32m--expensivePercentage\033[0m to specify the percentage of e
 echo -e '- \033[1;32m--expiredCardPercentage\033[0m to specify the percentage of orders with expired credit cards to create (default is 0)'
 echo
 echo -e 'Enjoy your Temporal sandbox!'
-echo -e '[Press \'q\' to access the terminal]'
+echo -e '[Press "q" to access the terminal]'
